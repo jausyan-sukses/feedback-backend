@@ -4,7 +4,7 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS: allow GitHub Pages
+// Allow GitHub Pages frontend access
 app.use(cors({
   origin: "https://jausyan-sukses.github.io"
 }));
