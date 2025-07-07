@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,54 +9,35 @@ app.use(cors({
   origin: "https://jausyan-sukses.github.io"
 }));
 
+// Middleware untuk JSON
 app.use(express.json());
 
-// ✅ KONEKSI KE MONGODB ATLAS
-mongoose.connect("mongodb+srv://admin:Pramuka2006@cluster0.1iivu1x.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log("✅ Connected to MongoDB Atlas");
-}).catch((err) => {
-  console.error("❌ MongoDB connection error:", err);
-});
-
-// ✅ Buat Schema + Model
-const feedbackSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  message: String,
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Feedback = mongoose.model("Feedback", feedbackSchema);
-
-// OPTIONS preflight
+// Preflight untuk /feedback
 app.options("/feedback", cors());
 
-// ✅ POST /feedback
-app.post("/feedback", async (req, res) => {
+// POST /feedback
+app.post("/feedback", (req, res) => {
   const { name, email, message } = req.body;
+  console.log("=== Feedback Received ===");
+  console.log("Name:", name);
+  console.log("Email:", email);
+  console.log("Message:", message);
 
+  // Validasi input (opsional)
   if (!name || !email || !message) {
-    return res.status(400).json({ success: false, message: "All fields are required" });
+    console.log("⚠️ Incomplete data");
+    return res.status(400).json({ success: false, message: "All fields required." });
   }
 
-  try {
-    const feedback = new Feedback({ name, email, message });
-    await feedback.save();
-    console.log("✅ Feedback saved:", feedback);
-    res.json({ success: true, message: "Feedback received and stored!" });
-  } catch (err) {
-    console.error("❌ Error saving feedback:", err);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
+  res.json({ success: true, message: "Feedback received successfully!" });
 });
 
+// GET /
 app.get("/", (req, res) => {
   res.send("Feedback API is running.");
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Server is running on port ${PORT}`);
 });
