@@ -21,9 +21,9 @@ app.get("/", (req, res) => {
 });
 
 app.post("/feedback", async (req, res) => {
-  const { name, email, message } = req.body;
+  const { name, email, phone, message } = req.body;
 
-  console.log("Received feedback:", { name, email, message });
+  console.log("Received feedback:", { name, email, phone, message });
 
   try {
     await pool.query(`
@@ -31,14 +31,15 @@ app.post("/feedback", async (req, res) => {
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT NOT NULL,
+        phone TEXT NOT NULL,
         message TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     await pool.query(
-      `INSERT INTO feedback (name, email, message) VALUES ($1, $2, $3)`,
-      [name, email, message]
+      `INSERT INTO feedback (name, email, phone, message) VALUES ($1, $2, $3, $4)`,
+      [name, email, phone, message]
     );
 
     res.json({ success: true, message: "Feedback saved to PostgreSQL!" });
