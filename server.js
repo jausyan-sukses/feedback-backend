@@ -42,7 +42,7 @@ app.post("/feedback", async (req, res) => {
       [name, email, phone, message]
     );
 
-    res.json({ success: true, message: "Feedback saved to PostgreSQL!" });
+    res.json({ success: true, message: "Thanks.. Your Feedback saved to Database!" });
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ success: false, message: "Database error" });
