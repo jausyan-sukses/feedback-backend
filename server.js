@@ -9,9 +9,15 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// const pool = new Pool({
+//   connectionString: process.env.DATABASE_URL,
+//   ssl: { rejectUnauthorized: false }  // Railway requires SSL
+// });
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }  // Railway requires SSL
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 const transporter = nodemailer.createTransport({
