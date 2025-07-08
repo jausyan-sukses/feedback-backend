@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
 const { Parser } = require("json2csv");
+const nodemailer = require("nodemailer");
+require("dotenv").config();
 require("dotenv").config();
 
 const app = express();
@@ -10,6 +12,14 @@ const PORT = process.env.PORT || 3000;
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }  // Railway requires SSL
+});
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 app.use(cors({
@@ -23,32 +33,37 @@ app.get("/", (req, res) => {
 
 app.post("/feedback", async (req, res) => {
   const { name, email, phone, message } = req.body;
-
-  console.log("Received feedback:", { name, email, phone, message });
+  console.log("Feedback received:", name, email, phone, message);
 
   try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS feedback (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        message TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
+    // Simpan ke DB
     await pool.query(
-      `INSERT INTO feedback (name, email, phone, message) VALUES ($1, $2, $3, $4)`,
+      "INSERT INTO feedback (name, email, phone, message) VALUES ($1, $2, $3, $4)",
       [name, email, phone, message]
     );
 
-    res.json({ success: true, message: "Thanks.. Feedback has been Saved in The Database" });
+    // Kirim Email
+    await transporter.sendMail({
+      from: `"Feedback Form" <${process.env.EMAIL_USER}>`,
+      to: process.env.TO_EMAIL,
+      subject: "New Feedback Received",
+      html: `
+        <h3>New Feedback Received</h3>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Message:</strong><br/>${message}</p>
+      `
+    });
+
+    res.json({ success: true, message: "Feedback received and email sent!" });
+
   } catch (err) {
-    console.error("Database error:", err);
-    res.status(500).json({ success: false, message: "Database error" });
+    console.error("Error saving feedback or sending email:", err);
+    res.status(500).json({ success: false, message: "Something went wrong." });
   }
 });
+// Endpoint to get all feedback
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
