@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+const { Parser } = require("json2csv");
 require("dotenv").config();
 
 const app = express();
@@ -42,7 +43,7 @@ app.post("/feedback", async (req, res) => {
       [name, email, phone, message]
     );
 
-    res.json({ success: true, message: "Thanks.. Your Feedback saved to Database!" });
+    res.json({ success: true, message: "Feedback saved to PostgreSQL!" });
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ success: false, message: "Database error" });
@@ -51,4 +52,23 @@ app.post("/feedback", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+
+app.get("/export", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM feedback ORDER BY created_at DESC");
+    const feedbacks = result.rows;
+
+    const fields = ["id", "name", "email", "phone", "message", "created_at"];
+    const opts = { fields };
+    const parser = new Parser(opts);
+    const csv = parser.parse(feedbacks);
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=feedback.csv");
+    res.status(200).end(csv);
+  } catch (error) {
+    console.error("Export error:", error);
+    res.status(500).send("Failed to export feedback");
+  }
 });
